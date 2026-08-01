@@ -98,6 +98,31 @@ fn decode_vertices(draco: &[u8]) -> Vec<Vertex2> {
 		.collect()
 }
 
+fn decode_faces(draco: &[u8]) -> Vec<Face2> {
+	let Some(draco_stream) = draco.get(4..) else {
+		return Vec::new();
+	};
+	let mut buffer = draco_core::DecoderBuffer::new(draco_stream);
+	let mut decoded = draco_core::Mesh::new();
+	if draco_core::MeshDecoder::new()
+		.decode(&mut buffer, &mut decoded)
+		.is_err()
+	{
+		return Vec::new();
+	}
+
+	(0..decoded.num_faces())
+		.map(|face| {
+			let face = decoded.face(draco_core::FaceIndex(face as u32));
+			Face2([
+				crate::mesh::VertexId2(face[0].0),
+				crate::mesh::VertexId2(face[1].0),
+				crate::mesh::VertexId2(face[2].0),
+			])
+		})
+		.collect()
+}
+
 #[binrw::binrw]
 #[brw(little)]
 #[derive(Debug, Clone)]
@@ -147,6 +172,10 @@ pub struct Coremesh2 {
 impl Coremesh2 {
 	pub fn vertices(&self) -> Vec<Vertex2> {
 		decode_vertices(&self.draco)
+	}
+
+	pub fn faces(&self) -> Vec<Face2> {
+		decode_faces(&self.draco)
 	}
 }
 
@@ -262,6 +291,12 @@ pub struct Mesh7 {
 	})]
 	#[bw(ignore)]
 	pub vertices: Vec<Vertex2>,
+	#[br(calc = match &coremesh {
+		Coremesh::V1(coremesh1) => coremesh1.faces.clone(),
+		Coremesh::V2(coremesh2) => coremesh2.faces(),
+	})]
+	#[bw(ignore)]
+	pub faces: Vec<Face2>,
 	// <- 0x27E2
 	pub lods: Lods,
 	#[br(try)]
@@ -281,6 +316,7 @@ fn read_mesh7_127279296594138() {
 	println!("data.len() = {}", data.len());
 	assert_eq!(data.len() as u64, bytes.position());
 	assert_eq!(mesh.vertices.len(), 408);
+	assert_eq!(mesh.faces.len(), 268);
 	assert!(mesh.vertices.iter().all(|vertex| {
 		vertex
 			.pos
@@ -293,6 +329,12 @@ fn read_mesh7_127279296594138() {
 			.iter()
 			.any(|vertex| vertex.pos.iter().any(|value| *value != 0.0))
 	);
+	assert!(mesh.vertices.iter().any(|vertex| {
+		vertex.norm.iter().any(|value| *value != 0.0)
+			&& vertex.tex.iter().any(|value| *value != 0.0)
+			&& vertex.tangent.iter().any(|value| *value != 0)
+			&& vertex.color.iter().any(|value| *value != 0)
+	}));
 	let bounds = mesh.vertices.iter().fold(
 		([f32::INFINITY; 3], [f32::NEG_INFINITY; 3]),
 		|(mut min, mut max), vertex| {
