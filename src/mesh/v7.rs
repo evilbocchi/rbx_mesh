@@ -2,7 +2,51 @@ use super::v2::{Face2, Vertex2};
 use super::v4::{Bone4, Envelope4, Subset4};
 use super::v5::{QuantizedTransforms5, ThreePoseCorrective5, TwoPoseCorrective5};
 
-fn decode_vertices(draco: &[u8]) -> Vec<[f32; 3]> {
+fn read_attribute_bytes(
+	attribute: &draco_core::geometry_attribute::PointAttribute,
+	point: usize,
+	components: usize,
+) -> Option<Vec<u8>> {
+	let value = attribute.mapped_index(draco_core::PointIndex(point as u32));
+	let stride = usize::try_from(attribute.byte_stride()).ok()?;
+	let offset = usize::try_from(value.0).ok()?.checked_mul(stride)?;
+	let end = offset.checked_add(components)?;
+	attribute.buffer().data().get(offset..end).map(Vec::from)
+}
+
+fn read_attribute_f32(
+	attribute: &draco_core::geometry_attribute::PointAttribute,
+	point: usize,
+	components: usize,
+) -> Option<Vec<f32>> {
+	if attribute.data_type() != draco_core::DataType::Float32
+		|| attribute.num_components() as usize != components
+	{
+		return None;
+	}
+	let bytes = read_attribute_bytes(attribute, point, components * size_of::<f32>())?;
+	Some(
+		bytes
+			.chunks_exact(size_of::<f32>())
+			.map(|bytes| f32::from_le_bytes(bytes.try_into().unwrap()))
+			.collect(),
+	)
+}
+
+fn read_attribute_u8(
+	attribute: &draco_core::geometry_attribute::PointAttribute,
+	point: usize,
+	components: usize,
+) -> Option<Vec<u8>> {
+	if attribute.data_type() != draco_core::DataType::Uint8
+		|| attribute.num_components() as usize != components
+	{
+		return None;
+	}
+	read_attribute_bytes(attribute, point, components)
+}
+
+fn decode_vertices(draco: &[u8]) -> Vec<Vertex2> {
 	let Some(draco_stream) = draco.get(4..) else {
 		return Vec::new();
 	};
@@ -15,25 +59,41 @@ fn decode_vertices(draco: &[u8]) -> Vec<[f32; 3]> {
 		return Vec::new();
 	}
 
-	let Some(attribute) = decoded.attribute_by_unique_id(0) else {
+	let Some(position) = decoded.attribute_by_unique_id(0) else {
 		return Vec::new();
 	};
-	if attribute.num_components() != 3 || attribute.data_type() != draco_core::DataType::Float32 {
+	let Some(normal) = decoded.attribute_by_unique_id(1) else {
 		return Vec::new();
-	}
+	};
+	let Some(tex) = decoded.attribute_by_unique_id(2) else {
+		return Vec::new();
+	};
+	let Some(tangent) = decoded.attribute_by_unique_id(3) else {
+		return Vec::new();
+	};
+	let Some(color) = decoded.attribute_by_unique_id(4) else {
+		return Vec::new();
+	};
 
-	let stride = attribute.byte_stride() as usize;
-	let data = attribute.buffer().data();
 	(0..decoded.num_points())
-		.map(|point| {
-			let value = attribute.mapped_index(draco_core::PointIndex(point as u32));
-			let offset = value.0 as usize * stride;
-			let bytes = &data[offset..offset + 12];
-			[
-				f32::from_le_bytes(bytes[0..4].try_into().unwrap()),
-				f32::from_le_bytes(bytes[4..8].try_into().unwrap()),
-				f32::from_le_bytes(bytes[8..12].try_into().unwrap()),
-			]
+		.filter_map(|point| {
+			let position = read_attribute_f32(position, point, 3)?;
+			let normal = read_attribute_f32(normal, point, 3)?;
+			let tex = read_attribute_f32(tex, point, 2)?;
+			let tangent = read_attribute_u8(tangent, point, 4)?;
+			let color = read_attribute_u8(color, point, 4)?;
+			Some(Vertex2 {
+				pos: position.try_into().ok()?,
+				norm: normal.try_into().ok()?,
+				tex: tex.try_into().ok()?,
+				tangent: tangent
+					.into_iter()
+					.map(|value| value as i8)
+					.collect::<Vec<_>>()
+					.try_into()
+					.ok()?,
+				color: color.try_into().ok()?,
+			})
 		})
 		.collect()
 }
@@ -85,7 +145,7 @@ pub struct Coremesh2 {
 }
 
 impl Coremesh2 {
-	pub fn vertices(&self) -> Vec<[f32; 3]> {
+	pub fn vertices(&self) -> Vec<Vertex2> {
 		decode_vertices(&self.draco)
 	}
 }
@@ -197,11 +257,11 @@ pub struct Mesh7 {
 	_newline: (),
 	pub coremesh: Coremesh,
 	#[br(calc = match &coremesh {
-		Coremesh::V1(coremesh1) => coremesh1.vertices.iter().map(|vertex| vertex.pos).collect(),
+		Coremesh::V1(coremesh1) => coremesh1.vertices.clone(),
 		Coremesh::V2(coremesh2) => coremesh2.vertices(),
 	})]
 	#[bw(ignore)]
-	pub vertices: Vec<[f32; 3]>,
+	pub vertices: Vec<Vertex2>,
 	// <- 0x27E2
 	pub lods: Lods,
 	#[br(try)]
@@ -221,23 +281,39 @@ fn read_mesh7_127279296594138() {
 	println!("data.len() = {}", data.len());
 	assert_eq!(data.len() as u64, bytes.position());
 	assert_eq!(mesh.vertices.len(), 408);
+	assert!(mesh.vertices.iter().all(|vertex| {
+		vertex
+			.pos
+			.iter()
+			.chain(vertex.norm.iter())
+			.all(|value| value.is_finite())
+	}));
 	assert!(
 		mesh.vertices
 			.iter()
-			.flatten()
-			.all(|value| value.is_finite())
+			.any(|vertex| vertex.pos.iter().any(|value| *value != 0.0))
+	);
+	let bounds = mesh.vertices.iter().fold(
+		([f32::INFINITY; 3], [f32::NEG_INFINITY; 3]),
+		|(mut min, mut max), vertex| {
+			for axis in 0..3 {
+				min[axis] = min[axis].min(vertex.pos[axis]);
+				max[axis] = max[axis].max(vertex.pos[axis]);
+			}
+			(min, max)
+		},
+	);
+	println!(
+		"decoded vertices: count={}, first={:?}, bounds={bounds:?}",
+		mesh.vertices.len(),
+		mesh.vertices[0]
 	);
 
 	let Coremesh::V2(coremesh2) = mesh.coremesh else {
 		panic!();
 	};
-	let cursor = std::io::Cursor::new(coremesh2.draco.as_slice());
-	let pos = cursor.position();
-	println!(
-		"rest of data = {:?}",
-		&coremesh2.draco.as_slice()[pos as usize..]
-	);
 	println!("lods = {:?}", mesh.lods);
+	assert_eq!(coremesh2.draco.len(), 10181);
 }
 
 #[test]
