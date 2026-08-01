@@ -32,6 +32,7 @@ match versioned_mesh{
 	},
 	Mesh::V4(mesh)=>println!("{:?}",mesh.vertices),
 	Mesh::V5(mesh)=>println!("{:?}",mesh.vertices),
+	Mesh::V7(mesh)=>println!("{:?}",mesh.vertices),
 }
 # binrw::BinResult::Ok(())
 ```

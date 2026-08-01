@@ -19,6 +19,7 @@ csgphs-v8-ruzstd = ["dep:ruzstd"] # 3.5x slower than zstd
 
 [dependencies]
 binrw = "0.15.0"
+draco-core = { version = "1.2.0", default-features = false, features = ["decoder"] }
 regex = { version = "1.11.3", default-features = false }
 ruzstd = { version = "0.8.2", default-features = false, optional = true, features = [
     "std",

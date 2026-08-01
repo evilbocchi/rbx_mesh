@@ -1,5 +1,3 @@
-mod draco;
-
 pub mod mesh;
 pub use mesh::read_versioned as read_mesh_versioned;
 

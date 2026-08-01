@@ -2,6 +2,42 @@ use super::v2::{Face2, Vertex2};
 use super::v4::{Bone4, Envelope4, Subset4};
 use super::v5::{QuantizedTransforms5, ThreePoseCorrective5, TwoPoseCorrective5};
 
+fn decode_vertices(draco: &[u8]) -> Vec<[f32; 3]> {
+	let Some(draco_stream) = draco.get(4..) else {
+		return Vec::new();
+	};
+	let mut buffer = draco_core::DecoderBuffer::new(draco_stream);
+	let mut decoded = draco_core::Mesh::new();
+	if draco_core::MeshDecoder::new()
+		.decode(&mut buffer, &mut decoded)
+		.is_err()
+	{
+		return Vec::new();
+	}
+
+	let Some(attribute) = decoded.attribute_by_unique_id(0) else {
+		return Vec::new();
+	};
+	if attribute.num_components() != 3 || attribute.data_type() != draco_core::DataType::Float32 {
+		return Vec::new();
+	}
+
+	let stride = attribute.byte_stride() as usize;
+	let data = attribute.buffer().data();
+	(0..decoded.num_points())
+		.map(|point| {
+			let value = attribute.mapped_index(draco_core::PointIndex(point as u32));
+			let offset = value.0 as usize * stride;
+			let bytes = &data[offset..offset + 12];
+			[
+				f32::from_le_bytes(bytes[0..4].try_into().unwrap()),
+				f32::from_le_bytes(bytes[4..8].try_into().unwrap()),
+				f32::from_le_bytes(bytes[8..12].try_into().unwrap()),
+			]
+		})
+		.collect()
+}
+
 #[binrw::binrw]
 #[brw(little)]
 #[derive(Debug, Clone)]
@@ -46,6 +82,12 @@ pub struct Coremesh2 {
 	pub draco_len: u32,
 	#[br(count = draco_len)]
 	pub draco: Vec<u8>,
+}
+
+impl Coremesh2 {
+	pub fn vertices(&self) -> Vec<[f32; 3]> {
+		decode_vertices(&self.draco)
+	}
 }
 
 #[binrw::binrw]
@@ -154,6 +196,12 @@ pub struct Mesh7 {
 	#[brw(magic = b"\n")]
 	_newline: (),
 	pub coremesh: Coremesh,
+	#[br(calc = match &coremesh {
+		Coremesh::V1(coremesh1) => coremesh1.vertices.iter().map(|vertex| vertex.pos).collect(),
+		Coremesh::V2(coremesh2) => coremesh2.vertices(),
+	})]
+	#[bw(ignore)]
+	pub vertices: Vec<[f32; 3]>,
 	// <- 0x27E2
 	pub lods: Lods,
 	#[br(try)]
@@ -166,41 +214,30 @@ fn _math() {
 
 #[test]
 fn read_mesh7_127279296594138() {
-	use crate::draco::{Connectivity, Draco};
 	use binrw::BinReaderExt;
 	let data = std::fs::read("meshes/mesh7_127279296594138.bin").unwrap();
 	let mut bytes = std::io::Cursor::new(data.as_slice());
 	let mesh: Mesh7 = bytes.read_le().unwrap();
 	println!("data.len() = {}", data.len());
 	assert_eq!(data.len() as u64, bytes.position());
+	assert_eq!(mesh.vertices.len(), 408);
+	assert!(
+		mesh.vertices
+			.iter()
+			.flatten()
+			.all(|value| value.is_finite())
+	);
 
 	let Coremesh::V2(coremesh2) = mesh.coremesh else {
 		panic!();
 	};
-	let mut cursor = std::io::Cursor::new(coremesh2.draco.as_slice());
-	let draco: Draco = cursor.read_le().unwrap();
-	println!("len = {:?}", draco.len);
-	println!("header = {:?}", draco.header);
-	println!("face_count = {:?}", draco.connectivity_header.face_count);
-	println!("pos_count = {:?}", draco.connectivity_header.pos_count);
-	let Connectivity::Sequential(connectivity) = draco.connectivity;
-	// println!("unknown4 = {:?}", connectivity.unknown4);
-	// println!("connectivity = {:?}", draco.connectivity);
-	println!("attributes = {:?}", draco.attributes);
-
-	// let first_attribute: Attribute = cursor.read_le().unwrap();
-	// println!("first_attribute = {first_attribute:?}");
-
+	let cursor = std::io::Cursor::new(coremesh2.draco.as_slice());
 	let pos = cursor.position();
 	println!(
 		"rest of data = {:?}",
-		&coremesh2.draco.as_slice()[pos as usize..pos as usize + 16]
+		&coremesh2.draco.as_slice()[pos as usize..]
 	);
-
 	println!("lods = {:?}", mesh.lods);
-
-	println!("draco.len() = {}", coremesh2.draco.len());
-	assert_eq!(coremesh2.draco.len() as u64, cursor.position());
 }
 
 #[test]
