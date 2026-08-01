@@ -4,7 +4,6 @@ use crate::mesh::{
 };
 use std::fs::read;
 
-#[cfg(feature = "mesh-v1")]
 #[test]
 fn mesh_100() {
 	use crate::mesh::{Mesh1, Revision1};

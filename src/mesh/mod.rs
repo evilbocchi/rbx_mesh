@@ -1,7 +1,5 @@
 // v1 based on https://github.com/MaximumADHD/Rbx2Source/blob/main/Geometry/Mesh.cs LoadGeometry_Ascii function
-#[cfg(feature = "mesh-v1")]
 mod v1;
-#[cfg(feature = "mesh-v1")]
 pub use v1::*;
 // the rest are based on https://devforum.roblox.com/t/roblox-mesh-format/326114
 mod v2;
@@ -19,30 +17,12 @@ use binrw::BinReaderExt;
 
 pub type Error = binrw::Error;
 
-#[cfg(feature = "mesh-v1")]
 #[expect(clippy::large_enum_variant)]
 #[binrw::binread]
 #[br(little)]
 #[derive(Debug, Clone)]
 pub enum Mesh {
-	// TODO: use feature-gated enum variant when this issue is fixed
-	// https://github.com/jam1garner/binrw/issues/360
-	// #[cfg(feature = "mesh-v1")]
 	V1(Mesh1),
-	V2(Mesh2),
-	V3(Mesh3),
-	V4(Mesh4),
-	V5(Mesh5),
-	//Version6(Mesh6),
-	V7(Mesh7),
-}
-
-#[cfg(not(feature = "mesh-v1"))]
-#[expect(clippy::large_enum_variant)]
-#[binrw::binread]
-#[br(little)]
-#[derive(Debug, Clone)]
-pub enum Mesh {
 	V2(Mesh2),
 	V3(Mesh3),
 	V4(Mesh4),
