@@ -22,7 +22,7 @@
     "build:debug": "napi build --platform",
     "test": "node --test test/*.test.cjs",
     "release:check": "npm run build && npm test && npm pack --dry-run",
-    "prepublishOnly": "napi pre-publish -t npm"
+    "prepublishOnly": "napi create-npm-dirs && napi pre-publish -t npm"
   },
   "napi": {
     "binaryName": "rbx_mesh",
@@ -49,5 +49,11 @@
   "license": "MIT OR Apache-2.0",
   "publishConfig": {
     "access": "public"
+  },
+  "optionalDependencies": {
+    "rbx-mesh-win32-x64-msvc": "0.1.0",
+    "rbx-mesh-linux-x64-gnu": "0.1.0",
+    "rbx-mesh-linux-x64-musl": "0.1.0",
+    "rbx-mesh-darwin-arm64": "0.1.0"
   }
 }
