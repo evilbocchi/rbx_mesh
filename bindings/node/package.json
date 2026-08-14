@@ -51,10 +51,6 @@
     "access": "public"
   },
   "optionalDependencies": {
-    "rbx-mesh-win32-x64-msvc": "0.1.0",
-    "rbx-mesh-linux-x64-gnu": "0.1.0",
-    "rbx-mesh-linux-x64-musl": "0.1.0",
-    "rbx-mesh-darwin-arm64": "0.1.0",
     "@unrealworks/rbx-mesh-win32-x64-msvc": "0.1.0",
     "@unrealworks/rbx-mesh-linux-x64-gnu": "0.1.0",
     "@unrealworks/rbx-mesh-linux-x64-musl": "0.1.0",
