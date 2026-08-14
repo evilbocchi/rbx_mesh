@@ -1,6 +1,6 @@
 {
   "name": "@unrealworks/rbx-mesh",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Node.js bindings for rbx_mesh",
   "repository": {
     "type": "git",
