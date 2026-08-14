@@ -1,7 +1,7 @@
 on:
   pull_request:
     paths:
-      - ".github/workflows/node-release.yml"
+      - ".github/workflows/ci.yml"
       - "bindings/node/**"
       - "src/**"
       - "Cargo.toml"
@@ -10,7 +10,7 @@ on:
     branches:
       - master
     paths:
-      - ".github/workflows/node-release.yml"
+      - ".github/workflows/ci.yml"
       - "bindings/node/**"
       - "src/**"
       - "Cargo.toml"
