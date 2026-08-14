@@ -89,7 +89,7 @@ jobs:
         run: npm ci
       - name: Build native addon
         working-directory: bindings/node
-        run: npm run build -- --target ${{ matrix.target }}
+        run: npx napi build --platform --release --target ${{ matrix.target }}
       - name: Upload native addon
         uses: actions/upload-artifact@v4
         with:
