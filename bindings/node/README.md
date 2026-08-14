@@ -51,8 +51,13 @@ console.log(mesh.indices); // Uint32Array, triangle indices
 - `parseMesh4`
 - `parseMesh5`
 - `parseMesh7`
+- `parseCsgMdl2`
+- `parseCsgMdl4`
+- `parseCsgMdl5`
 
 These objects retain format-specific data such as LODs, skinning, bones, FACS data, and v7 coremesh information.
+
+`parseCsgMdl2()`, `parseCsgMdl4()`, and `parseCsgMdl5()` decode raw CSGMDL union graphics data, including hashes, vertices, faces, and format-specific metadata.
 
 ### Versioned return shape
 

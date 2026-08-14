@@ -2,6 +2,7 @@ use napi::bindgen_prelude::Buffer;
 use napi::{Error, Result};
 use napi_derive::napi;
 use rbx_mesh::mesh as rbx;
+use rbx_mesh::union_graphics as graphics;
 
 use crate::{mesh_version_name, parse_versioned};
 
@@ -141,6 +142,161 @@ pub struct Face2Binding(pub u32, pub u32, pub u32);
 impl From<&rbx::Face2> for Face2Binding {
 	fn from(value: &rbx::Face2) -> Self {
 		Self(value.0[0].0, value.0[1].0, value.0[2].0)
+	}
+}
+
+// ---- Union graphics CSGMDL2/4 ---------------------------------------------
+
+#[napi(object, js_name = "UnionHash")]
+pub struct UnionHashBinding {
+	pub hash: Buffer,
+	pub unknown: Buffer,
+}
+
+impl From<&graphics::Hash> for UnionHashBinding {
+	fn from(value: &graphics::Hash) -> Self {
+		Self {
+			hash: value.hash.to_vec().into(),
+			unknown: value._unknown.to_vec().into(),
+		}
+	}
+}
+
+#[napi(object, js_name = "UnionVertex2")]
+pub struct UnionVertex2Binding {
+	pub pos: Vec<f64>,
+	pub norm: Vec<f64>,
+	pub color: Vec<u32>,
+	pub normal_id: u32,
+	pub tex: Vec<f64>,
+	pub tangent: Vec<f64>,
+}
+
+impl From<&graphics::Vertex> for UnionVertex2Binding {
+	fn from(value: &graphics::Vertex) -> Self {
+		Self {
+			pos: f32s(&value.pos),
+			norm: f32s(&value.norm),
+			color: u8s(&value.color),
+			normal_id: u32::from(&value.normal_id),
+			tex: f32s(&value.tex),
+			tangent: f32s(&value.tangent),
+		}
+	}
+}
+
+#[napi(object, js_name = "UnionMesh2")]
+pub struct UnionMesh2Binding {
+	pub vertex_count: u32,
+	pub face_count: u32,
+	pub vertices: Vec<UnionVertex2Binding>,
+	pub faces: Vec<Face2Binding>,
+}
+
+impl From<&graphics::Mesh2> for UnionMesh2Binding {
+	fn from(value: &graphics::Mesh2) -> Self {
+		Self {
+			vertex_count: value.vertices.len() as u32,
+			face_count: value.faces.len() as u32,
+			vertices: value
+				.vertices
+				.iter()
+				.map(UnionVertex2Binding::from)
+				.collect(),
+			faces: value
+				.faces
+				.iter()
+				.map(|face| Face2Binding(face[0].0, face[1].0, face[2].0))
+				.collect(),
+		}
+	}
+}
+
+#[napi(object, js_name = "CsgMdl2")]
+pub struct CsgMdl2Binding {
+	pub hash: UnionHashBinding,
+	pub mesh: UnionMesh2Binding,
+}
+
+impl From<&graphics::CSGMDL2> for CsgMdl2Binding {
+	fn from(value: &graphics::CSGMDL2) -> Self {
+		Self {
+			hash: UnionHashBinding::from(&value.hash),
+			mesh: UnionMesh2Binding::from(&value.mesh),
+		}
+	}
+}
+
+#[napi(object, js_name = "CsgMdl4")]
+pub struct CsgMdl4Binding {
+	pub hash: UnionHashBinding,
+	pub mesh: UnionMesh2Binding,
+	pub unknown1: Vec<u32>,
+}
+
+impl From<&graphics::CSGMDL4> for CsgMdl4Binding {
+	fn from(value: &graphics::CSGMDL4) -> Self {
+		Self {
+			hash: UnionHashBinding::from(&value.hash),
+			mesh: UnionMesh2Binding::from(&value.mesh),
+			unknown1: value._unknown1_list.clone(),
+		}
+	}
+}
+
+#[napi(object, js_name = "CsgMdl5Faces")]
+pub struct CsgMdl5FacesBinding {
+	pub indices: Vec<u32>,
+	pub unknown: Vec<Vec<u32>>,
+}
+
+impl From<&graphics::Faces5> for CsgMdl5FacesBinding {
+	fn from(value: &graphics::Faces5) -> Self {
+		Self {
+			indices: value.indices.clone(),
+			unknown: value._unknown.clone(),
+		}
+	}
+}
+
+#[napi(object, js_name = "CsgMdl5")]
+pub struct CsgMdl5Binding {
+	pub position_count: u32,
+	pub normal_count: u32,
+	pub color_count: u32,
+	pub normal_id_count: u32,
+	pub tex_count: u32,
+	pub tangent_count: u32,
+	pub positions: Vec<Vec<f64>>,
+	pub normals: Vec<Vec<f64>>,
+	pub colors: Vec<Vec<u32>>,
+	pub normal_ids: Vec<u32>,
+	pub tex: Vec<Vec<f64>>,
+	pub tangents: Vec<Vec<f64>>,
+	pub faces: CsgMdl5FacesBinding,
+}
+
+impl From<&graphics::CSGMDL5> for CsgMdl5Binding {
+	fn from(value: &graphics::CSGMDL5) -> Self {
+		Self {
+			position_count: value.positions.len() as u32,
+			normal_count: value.normals.len() as u32,
+			color_count: value.colors.len() as u32,
+			normal_id_count: value.normal_ids.len() as u32,
+			tex_count: value.tex.len() as u32,
+			tangent_count: value.tangents.len() as u32,
+			positions: value.positions.iter().map(f32s).collect(),
+			normals: value.normals.iter().map(|value| f32s(&value.0)).collect(),
+			colors: value.colors.iter().map(u8s).collect(),
+			normal_ids: value
+				.normal_ids
+				.iter()
+				.map(|value| u8::from(value) as u32)
+				.collect(),
+			tex: value.tex.iter().map(f32s).collect(),
+			tangents: value.tangents.iter().map(|value| f32s(&value.0)).collect(),
+			faces: CsgMdl5FacesBinding::from(&value.faces),
+		}
 	}
 }
 
@@ -955,5 +1111,53 @@ pub fn parse_mesh7(data: &[u8]) -> Result<Mesh7Binding> {
 	match &mesh {
 		rbx::Mesh::V7(value) => Ok(Mesh7Binding::from(value)),
 		_ => Err(wrong_version("7", &mesh)),
+	}
+}
+
+fn parse_union_graphics(data: &[u8]) -> Result<graphics::UnionGraphics> {
+	rbx_mesh::read_union_graphics_versioned(std::io::Cursor::new(data))
+		.map_err(|err| Error::from_reason(format!("failed to parse Roblox union graphics: {err}")))
+}
+
+fn union_graphics_version_name(union: &graphics::UnionGraphics) -> &'static str {
+	match union {
+		graphics::UnionGraphics::CSGK(_) => "CSGK",
+		graphics::UnionGraphics::V2(_) => "CSGMDL2",
+		graphics::UnionGraphics::V4(_) => "CSGMDL4",
+		graphics::UnionGraphics::V5(_) => "CSGMDL5",
+	}
+}
+
+fn wrong_union_graphics_version(expected: &str, actual: &graphics::UnionGraphics) -> Error {
+	Error::from_reason(format!(
+		"expected Roblox union graphics version {expected}, got {}",
+		union_graphics_version_name(actual)
+	))
+}
+
+#[napi]
+pub fn parse_csg_mdl2(data: &[u8]) -> Result<CsgMdl2Binding> {
+	let union = parse_union_graphics(data)?;
+	match &union {
+		graphics::UnionGraphics::V2(value) => Ok(CsgMdl2Binding::from(value)),
+		_ => Err(wrong_union_graphics_version("CSGMDL2", &union)),
+	}
+}
+
+#[napi]
+pub fn parse_csg_mdl4(data: &[u8]) -> Result<CsgMdl4Binding> {
+	let union = parse_union_graphics(data)?;
+	match &union {
+		graphics::UnionGraphics::V4(value) => Ok(CsgMdl4Binding::from(value)),
+		_ => Err(wrong_union_graphics_version("CSGMDL4", &union)),
+	}
+}
+
+#[napi]
+pub fn parse_csg_mdl5(data: &[u8]) -> Result<CsgMdl5Binding> {
+	let union = parse_union_graphics(data)?;
+	match &union {
+		graphics::UnionGraphics::V5(value) => Ok(CsgMdl5Binding::from(value)),
+		_ => Err(wrong_union_graphics_version("CSGMDL5", &union)),
 	}
 }

@@ -46,6 +46,48 @@ test("low-level v2 parser retains versioned structure", () => {
   assert.equal(mesh.vertices.vertices[0].tex.length, 2);
 });
 
+test("CSGMDL2 parser decodes raw union graphics", () => {
+  const union = binding.parseCsgMdl2(readMesh("385416572.meshdata"));
+
+  assert.equal(union.hash.hash.length, 16);
+  assert.equal(union.hash.unknown.length, 16);
+  assert.equal(union.mesh.vertexCount, union.mesh.vertices.length);
+  assert.equal(union.mesh.faceCount, union.mesh.faces.length);
+  assert.equal(union.mesh.vertices[0].pos.length, 3);
+  assert.equal(union.mesh.vertices[0].norm.length, 3);
+  assert.equal(union.mesh.vertices[0].color.length, 4);
+  assert.equal(union.mesh.vertices[0].tex.length, 2);
+  assert.equal(union.mesh.vertices[0].tangent.length, 3);
+});
+
+test("CSGMDL4 parser decodes raw union graphics", () => {
+  const union = binding.parseCsgMdl4(readMesh("4500696697_4.meshdata"));
+
+  assert.equal(union.hash.hash.length, 16);
+  assert.equal(union.hash.unknown.length, 16);
+  assert.equal(union.mesh.vertexCount, union.mesh.vertices.length);
+  assert.equal(union.mesh.faceCount, union.mesh.faces.length);
+  assert.ok(Array.isArray(union.unknown1));
+});
+
+test("CSGMDL5 parser decodes raw union graphics", () => {
+  const union = binding.parseCsgMdl5(readMesh("14846974687_5.meshdata"));
+
+  assert.equal(union.positionCount, union.positions.length);
+  assert.equal(union.normalCount, union.normals.length);
+  assert.equal(union.colorCount, union.colors.length);
+  assert.equal(union.normalIdCount, union.normalIds.length);
+  assert.equal(union.texCount, union.tex.length);
+  assert.equal(union.tangentCount, union.tangents.length);
+  assert.equal(union.positions[0].length, 3);
+  assert.equal(union.normals[0].length, 3);
+  assert.equal(union.colors[0].length, 4);
+  assert.equal(union.tex[0].length, 2);
+  assert.equal(union.tangents[0].length, 3);
+  assert.equal(union.faces.indices.length % 3, 0);
+  assert.ok(Array.isArray(union.faces.unknown));
+});
+
 test("dedicated v3 parser handles both known v3 revisions", () => {
   assert.equal(
     binding.parseMesh3(readMesh("5115672913")).revision,
