@@ -4,12 +4,12 @@
   "description": "Node.js bindings for rbx_mesh",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/krakow10/rbx_mesh.git"
+    "url": "git+https://github.com/evilbocchi/rbx_mesh.git"
   },
   "bugs": {
-    "url": "https://github.com/krakow10/rbx_mesh/issues"
+    "url": "https://github.com/evilbocchi/rbx_mesh/issues"
   },
-  "homepage": "https://github.com/krakow10/rbx_mesh#readme",
+  "homepage": "https://github.com/evilbocchi/rbx_mesh#readme",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
