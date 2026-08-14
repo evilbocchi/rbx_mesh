@@ -2,6 +2,14 @@
   "name": "rbx-mesh",
   "version": "0.1.0",
   "description": "Node.js bindings for rbx_mesh",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krakow10/rbx_mesh.git"
+  },
+  "bugs": {
+    "url": "https://github.com/krakow10/rbx_mesh/issues"
+  },
+  "homepage": "https://github.com/krakow10/rbx_mesh#readme",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
@@ -12,17 +20,35 @@
   "scripts": {
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-    "test": "node --test test/*.test.cjs"
+    "test": "node --test test/*.test.cjs",
+    "release:check": "npm run build && npm test && npm pack --dry-run",
+    "prepublishOnly": "napi pre-publish -t npm"
   },
   "napi": {
-    "binaryName": "rbx_mesh"
+    "binaryName": "rbx_mesh",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin"
+    ]
   },
   "devDependencies": {
     "@napi-rs/cli": "^3.7.1"
   },
+  "keywords": [
+    "roblox",
+    "mesh",
+    "parser",
+    "napi-rs",
+    "native"
+  ],
   "engines": {
     "node": ">=22.13"
   },
   "license": "MIT OR Apache-2.0",
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }

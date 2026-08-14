@@ -16,6 +16,14 @@ npm run build
 
 The napi-rs CLI generates `index.js`, `index.d.ts`, and the platform-specific native addon.
 
+## Install
+
+```sh
+npm install rbx-mesh
+```
+
+The native addon is distributed through napi-rs platform packages and supports Windows x64, Linux x64 (glibc and musl), macOS x64, and macOS arm64.
+
 ## High-level API
 
 ```js

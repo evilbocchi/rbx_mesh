@@ -2,4 +2,5 @@
 /index.js
 /index.d.ts
 /*.node
+/npm
 /npm-debug.log*
