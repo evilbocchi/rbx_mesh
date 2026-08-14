@@ -15,14 +15,11 @@ on:
       - "src/**"
       - "Cargo.toml"
       - "Cargo.lock"
-  release:
-    types:
-      - created
   workflow_dispatch:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 env:
   NODE_VERSION: "22"
@@ -100,7 +97,7 @@ jobs:
 
   publish:
     name: Publish npm packages
-    if: github.event_name == 'release'
+    if: github.event_name == 'workflow_dispatch'
     needs:
       - test
       - build
@@ -111,7 +108,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: "26"
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
       - name: Verify release version
@@ -136,4 +133,6 @@ jobs:
         run: npx napi artifacts --output-dir artifacts --npm-dir npm
       - name: Publish packages
         working-directory: bindings/node
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm publish --access public
