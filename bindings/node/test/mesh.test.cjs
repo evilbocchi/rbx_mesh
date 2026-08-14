@@ -52,7 +52,7 @@ test("CSGMDL2 parser decodes raw union graphics", () => {
   assert.equal(union.hash.hash.length, 16);
   assert.equal(union.hash.unknown.length, 16);
   assert.equal(union.mesh.vertexCount, union.mesh.vertices.length);
-  assert.equal(union.mesh.faceCount, union.mesh.faces.length);
+  assert.equal(union.mesh.faceCount, union.mesh.faces.length * 3);
   assert.equal(union.mesh.vertices[0].pos.length, 3);
   assert.equal(union.mesh.vertices[0].norm.length, 3);
   assert.equal(union.mesh.vertices[0].color.length, 4);
@@ -66,7 +66,8 @@ test("CSGMDL4 parser decodes raw union graphics", () => {
   assert.equal(union.hash.hash.length, 16);
   assert.equal(union.hash.unknown.length, 16);
   assert.equal(union.mesh.vertexCount, union.mesh.vertices.length);
-  assert.equal(union.mesh.faceCount, union.mesh.faces.length);
+  assert.equal(union.mesh.faceCount, union.mesh.faces.length * 3);
+  assert.equal(union.unknown1Count, union.unknown1.length);
   assert.ok(Array.isArray(union.unknown1));
 });
 
@@ -75,10 +76,12 @@ test("CSGMDL5 parser decodes raw union graphics", () => {
 
   assert.equal(union.positionCount, union.positions.length);
   assert.equal(union.normalCount, union.normals.length);
+  assert.equal(union.normalsLen, union.normals.length * 6);
   assert.equal(union.colorCount, union.colors.length);
   assert.equal(union.normalIdCount, union.normalIds.length);
   assert.equal(union.texCount, union.tex.length);
   assert.equal(union.tangentCount, union.tangents.length);
+  assert.equal(union.tangentsLen, union.tangents.length * 6);
   assert.equal(union.positions[0].length, 3);
   assert.equal(union.normals[0].length, 3);
   assert.equal(union.colors[0].length, 4);
@@ -117,6 +120,14 @@ test("v5 exposes FACS and skinning-era structures", () => {
   assert.equal(
     mesh.facs.faceControlNamesLen,
     mesh.facs.faceControlNames.length,
+  );
+  assert.equal(
+    mesh.facs.twoPoseCorrectivesLen,
+    mesh.facs.twoPoseCorrectives.length * 4,
+  );
+  assert.equal(
+    mesh.facs.threePoseCorrectivesLen,
+    mesh.facs.threePoseCorrectives.length * 6,
   );
 });
 

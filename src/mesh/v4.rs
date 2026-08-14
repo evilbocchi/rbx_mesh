@@ -98,23 +98,11 @@ pub struct Mesh4 {
 	#[brw(magic = 24u16)]
 	_sizeof_header: (),
 	pub lod_type: LodType4,
-	#[br(temp)]
-	#[bw(try_calc=vertices.len().try_into())]
 	pub vertex_count: u32,
-	#[br(temp)]
-	#[bw(try_calc=faces.len().try_into())]
 	pub face_count: u32,
-	#[br(temp)]
-	#[bw(try_calc=lods.len().try_into())]
 	pub lod_count: u16,
-	#[br(temp)]
-	#[bw(try_calc=bones.len().try_into())]
 	pub bone_count: u16,
-	#[br(temp)]
-	#[bw(try_calc=bone_names.len().try_into())]
 	pub bone_names_len: u32,
-	#[br(temp)]
-	#[bw(try_calc=subsets.len().try_into())]
 	pub subset_count: u16,
 	pub lod_hq_count: u8,
 	pub _padding: u8,

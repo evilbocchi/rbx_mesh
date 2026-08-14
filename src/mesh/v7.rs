@@ -144,16 +144,10 @@ pub enum Coremesh {
 #[brw(magic = b"COREMESH\x01\0\0\0")]
 #[derive(Debug, Clone)]
 pub struct Coremesh1 {
-	#[br(temp)]
-	#[bw(try_calc = (vertices.len()*size_of::<Vertex2>() + faces.len()*size_of::<Face2>()).try_into())]
 	pub len: u32,
-	#[br(temp)]
-	#[bw(try_calc = vertices.len().try_into())]
 	pub vertex_count: u32,
 	#[br(count = vertex_count)]
 	pub vertices: Vec<Vertex2>,
-	#[br(temp)]
-	#[bw(try_calc = faces.len().try_into())]
 	pub face_count: u32,
 	#[br(count = face_count)]
 	pub faces: Vec<Face2>,
@@ -202,26 +196,18 @@ pub struct Lods {
 #[derive(Debug, Clone)]
 pub struct Skinning {
 	pub len: u32,
-	#[br(temp)]
-	#[bw(try_calc = envelopes.len().try_into())]
 	pub envelope_count: u32,
 	#[br(count = envelope_count)]
 	pub envelopes: Vec<Envelope4>,
 
-	#[br(temp)]
-	#[bw(try_calc=bones.len().try_into())]
 	pub bone_count: u32,
 	#[br(count=bone_count)]
 	pub bones: Vec<Bone4>,
 
-	#[br(temp)]
-	#[bw(try_calc=bone_names.len().try_into())]
 	pub bone_names_len: u32,
 	#[br(count=bone_names_len)]
 	pub bone_names: Vec<u8>,
 
-	#[br(temp)]
-	#[bw(try_calc=subsets.len().try_into())]
 	pub subset_count: u32,
 	#[br(count=subset_count)]
 	pub subsets: Vec<Subset4>,
@@ -266,8 +252,6 @@ pub struct Facs7 {
 #[derive(Debug, Clone)]
 pub struct Mesh7Ext {
 	#[brw(magic = b"SKINNING")]
-	#[br(temp)]
-	#[bw(try_calc = skinnings.len().try_into())]
 	pub skinning_count: u32,
 	#[br(count = skinning_count)]
 	pub skinnings: Vec<Skinning>,

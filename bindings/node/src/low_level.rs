@@ -18,30 +18,6 @@ fn i8s<const N: usize>(values: &[i8; N]) -> Vec<i32> {
 	values.iter().map(|&value| value as i32).collect()
 }
 
-fn quantized_matrix5_len(value: &rbx::QuantizedMatrix5) -> usize {
-	// u16 enum tag + variant payload. Mirrors rbx_mesh's private serialization-length helper.
-	std::mem::size_of::<u16>()
-		+ match value {
-			rbx::QuantizedMatrix5::Raw { matrix, .. } => {
-				2 * std::mem::size_of::<u32>() + matrix.len() * std::mem::size_of::<f32>()
-			}
-			rbx::QuantizedMatrix5::Quantized { matrix, .. } => {
-				2 * std::mem::size_of::<u32>()
-					+ 2 * std::mem::size_of::<f32>()
-					+ matrix.len() * std::mem::size_of::<u16>()
-			}
-		}
-}
-
-fn quantized_transforms5_len(value: &rbx::QuantizedTransforms5) -> usize {
-	quantized_matrix5_len(&value.px)
-		+ quantized_matrix5_len(&value.py)
-		+ quantized_matrix5_len(&value.pz)
-		+ quantized_matrix5_len(&value.rx)
-		+ quantized_matrix5_len(&value.ry)
-		+ quantized_matrix5_len(&value.rz)
-}
-
 fn wrong_version(expected: &str, actual: &rbx::Mesh) -> Error {
 	Error::from_reason(format!(
 		"expected Roblox mesh version {expected}, got version {}",
@@ -196,8 +172,8 @@ pub struct UnionMesh2Binding {
 impl From<&graphics::Mesh2> for UnionMesh2Binding {
 	fn from(value: &graphics::Mesh2) -> Self {
 		Self {
-			vertex_count: value.vertices.len() as u32,
-			face_count: value.faces.len() as u32,
+			vertex_count: value.vertex_count,
+			face_count: value.face_count,
 			vertices: value
 				.vertices
 				.iter()
@@ -231,6 +207,7 @@ impl From<&graphics::CSGMDL2> for CsgMdl2Binding {
 pub struct CsgMdl4Binding {
 	pub hash: UnionHashBinding,
 	pub mesh: UnionMesh2Binding,
+	pub unknown1_count: u32,
 	pub unknown1: Vec<u32>,
 }
 
@@ -239,6 +216,7 @@ impl From<&graphics::CSGMDL4> for CsgMdl4Binding {
 		Self {
 			hash: UnionHashBinding::from(&value.hash),
 			mesh: UnionMesh2Binding::from(&value.mesh),
+			unknown1_count: value._unknown1_count,
 			unknown1: value._unknown1_list.clone(),
 		}
 	}
@@ -263,10 +241,12 @@ impl From<&graphics::Faces5> for CsgMdl5FacesBinding {
 pub struct CsgMdl5Binding {
 	pub position_count: u32,
 	pub normal_count: u32,
+	pub normals_len: u32,
 	pub color_count: u32,
 	pub normal_id_count: u32,
 	pub tex_count: u32,
 	pub tangent_count: u32,
+	pub tangents_len: u32,
 	pub positions: Vec<Vec<f64>>,
 	pub normals: Vec<Vec<f64>>,
 	pub colors: Vec<Vec<u32>>,
@@ -279,12 +259,14 @@ pub struct CsgMdl5Binding {
 impl From<&graphics::CSGMDL5> for CsgMdl5Binding {
 	fn from(value: &graphics::CSGMDL5) -> Self {
 		Self {
-			position_count: value.positions.len() as u32,
-			normal_count: value.normals.len() as u32,
-			color_count: value.colors.len() as u32,
-			normal_id_count: value.normal_ids.len() as u32,
-			tex_count: value.tex.len() as u32,
-			tangent_count: value.tangents.len() as u32,
+			position_count: value.pos_count as u32,
+			normal_count: value.normals_count as u32,
+			normals_len: value.normals_len,
+			color_count: value.color_count as u32,
+			normal_id_count: value.normal_id_count as u32,
+			tex_count: value.tex_count as u32,
+			tangent_count: value.tangents_count as u32,
+			tangents_len: value.tangents_len,
 			positions: value.positions.iter().map(f32s).collect(),
 			normals: value.normals.iter().map(|value| f32s(&value.0)).collect(),
 			colors: value.colors.iter().map(u8s).collect(),
@@ -481,10 +463,6 @@ pub struct Mesh2Binding {
 
 impl From<&rbx::Mesh2> for Mesh2Binding {
 	fn from(value: &rbx::Mesh2) -> Self {
-		let vertex_count = match &value.vertices {
-			rbx::Vertices2::Full(vertices) => vertices.len(),
-			rbx::Vertices2::Truncated(vertices) => vertices.len(),
-		} as u32;
 		let size_of_vertex = match &value.vertices {
 			rbx::Vertices2::Full(_) => 40,
 			rbx::Vertices2::Truncated(_) => 36,
@@ -492,8 +470,8 @@ impl From<&rbx::Mesh2> for Mesh2Binding {
 		Self {
 			revision: Revision2Binding::Version200,
 			size_of_vertex,
-			vertex_count,
-			face_count: value.faces.len() as u32,
+			vertex_count: value.vertex_count,
+			face_count: value.face_count,
 			vertices: Vertices2Binding::from(&value.vertices),
 			faces: value.faces.iter().map(Face2Binding::from).collect(),
 		}
@@ -532,10 +510,6 @@ pub struct Mesh3Binding {
 
 impl From<&rbx::Mesh3> for Mesh3Binding {
 	fn from(value: &rbx::Mesh3) -> Self {
-		let vertex_count = match &value.vertices {
-			rbx::Vertices2::Full(vertices) => vertices.len(),
-			rbx::Vertices2::Truncated(vertices) => vertices.len(),
-		} as u32;
 		let size_of_vertex = match &value.vertices {
 			rbx::Vertices2::Full(_) => 40,
 			rbx::Vertices2::Truncated(_) => 36,
@@ -543,9 +517,9 @@ impl From<&rbx::Mesh3> for Mesh3Binding {
 		Self {
 			revision: Revision3Binding::from(&value.revision),
 			size_of_vertex,
-			lod_count: value.lods.len() as u32,
-			vertex_count,
-			face_count: value.faces.len() as u32,
+			lod_count: value.lod_count as u32,
+			vertex_count: value.vertex_count,
+			face_count: value.face_count,
 			vertices: Vertices2Binding::from(&value.vertices),
 			faces: value.faces.iter().map(Face2Binding::from).collect(),
 			lods: value.lods.iter().map(Lod3Binding::from).collect(),
@@ -596,12 +570,12 @@ impl From<&rbx::Mesh4> for Mesh4Binding {
 		Self {
 			revision: Revision4Binding::from(&value.revision),
 			lod_type: LodType4Binding::from(&value.lod_type),
-			vertex_count: value.vertices.len() as u32,
-			face_count: value.faces.len() as u32,
-			lod_count: value.lods.len() as u32,
-			bone_count: value.bones.len() as u32,
-			bone_names_len: value.bone_names.len() as u32,
-			subset_count: value.subsets.len() as u32,
+			vertex_count: value.vertex_count,
+			face_count: value.face_count,
+			lod_count: value.lod_count as u32,
+			bone_count: value.bone_count as u32,
+			bone_names_len: value.bone_names_len,
+			subset_count: value.subset_count as u32,
 			lod_hq_count: value.lod_hq_count as u32,
 			padding: value._padding as u32,
 			vertices: value.vertices.iter().map(Vertex2Binding::from).collect(),
@@ -737,14 +711,11 @@ pub struct Facs5Binding {
 impl From<&rbx::Facs5> for Facs5Binding {
 	fn from(value: &rbx::Facs5) -> Self {
 		Self {
-			face_bone_names_len: value.face_bone_names.len() as u32,
-			face_control_names_len: value.face_control_names.len() as u32,
-			quantized_transforms_len: quantized_transforms5_len(&value.quantized_transforms) as i64,
-			two_pose_correctives_len: (value.two_pose_correctives.len()
-				* std::mem::size_of::<rbx::TwoPoseCorrective5>()) as u32,
-			three_pose_correctives_len: (value.three_pose_correctives.len()
-				* std::mem::size_of::<rbx::ThreePoseCorrective5>())
-				as u32,
+			face_bone_names_len: value.face_bone_names_len,
+			face_control_names_len: value.face_control_names_len,
+			quantized_transforms_len: value.quantized_transforms_len as i64,
+			two_pose_correctives_len: value.two_pose_correctives_len,
+			three_pose_correctives_len: value.three_pose_correctives_len,
 			face_bone_names: value.face_bone_names.clone().into(),
 			face_control_names: value.face_control_names.clone().into(),
 			quantized_transforms: QuantizedTransforms5Binding::from(&value.quantized_transforms),
@@ -790,12 +761,12 @@ impl From<&rbx::Mesh5> for Mesh5Binding {
 		Self {
 			revision: Revision5Binding::Version500,
 			lod_type: LodType4Binding::from(&value.lod_type),
-			vertex_count: value.vertices.len() as u32,
-			face_count: value.faces.len() as u32,
-			lod_count: value.lods.len() as u32,
-			bone_count: value.bones.len() as u32,
-			bone_names_len: value.bone_names.len() as u32,
-			subset_count: value.subsets.len() as u32,
+			vertex_count: value.vertex_count,
+			face_count: value.face_count,
+			lod_count: value.lod_count as u32,
+			bone_count: value.bone_count as u32,
+			bone_names_len: value.bone_names_len,
+			subset_count: value.subset_count as u32,
 			lod_hq_count: value.lod_hq_count as u32,
 			facs_format: FacsFormat5Binding::Format1,
 			sizeof_facs: value.sizeof_facs,
@@ -829,13 +800,11 @@ pub struct Coremesh1Binding {
 
 impl From<&rbx::Coremesh1> for Coremesh1Binding {
 	fn from(value: &rbx::Coremesh1) -> Self {
-		let len = value.vertices.len() * std::mem::size_of::<rbx::Vertex2>()
-			+ value.faces.len() * std::mem::size_of::<rbx::Face2>();
 		Self {
-			len: len as u32,
-			vertex_count: value.vertices.len() as u32,
+			len: value.len,
+			vertex_count: value.vertex_count,
 			vertices: value.vertices.iter().map(Vertex2Binding::from).collect(),
-			face_count: value.faces.len() as u32,
+			face_count: value.face_count,
 			faces: value.faces.iter().map(Face2Binding::from).collect(),
 		}
 	}
@@ -850,7 +819,7 @@ pub struct Coremesh2Binding {
 impl From<&rbx::Coremesh2> for Coremesh2Binding {
 	fn from(value: &rbx::Coremesh2) -> Self {
 		Self {
-			draco_len: value.draco.len() as u32,
+			draco_len: value.draco_len,
 			draco: value.draco.clone().into(),
 		}
 	}
@@ -892,7 +861,7 @@ impl From<&rbx::Lods> for Lods7Binding {
 		Self {
 			unknown1: value.unknown1,
 			unknown2: value.unknown2,
-			unknown3_len: value.unknown3.len() as u32,
+			unknown3_len: value.unknown3_len,
 			unknown3: value.unknown3.clone().into(),
 		}
 	}
@@ -915,13 +884,13 @@ impl From<&rbx::Skinning> for Skinning7Binding {
 	fn from(value: &rbx::Skinning) -> Self {
 		Self {
 			len: value.len,
-			envelope_count: value.envelopes.len() as u32,
+			envelope_count: value.envelope_count,
 			envelopes: value.envelopes.iter().map(Envelope4Binding::from).collect(),
-			bone_count: value.bones.len() as u32,
+			bone_count: value.bone_count,
 			bones: value.bones.iter().map(Bone4Binding::from).collect(),
-			bone_names_len: value.bone_names.len() as u32,
+			bone_names_len: value.bone_names_len,
 			bone_names: value.bone_names.clone().into(),
-			subset_count: value.subsets.len() as u32,
+			subset_count: value.subset_count,
 			subsets: value.subsets.iter().map(Subset4Binding::from).collect(),
 		}
 	}
@@ -980,7 +949,7 @@ pub struct Mesh7ExtBinding {
 impl From<&rbx::Mesh7Ext> for Mesh7ExtBinding {
 	fn from(value: &rbx::Mesh7Ext) -> Self {
 		Self {
-			skinning_count: value.skinnings.len() as u32,
+			skinning_count: value.skinning_count,
 			skinnings: value.skinnings.iter().map(Skinning7Binding::from).collect(),
 			facs: Facs7Binding::from(&value.facs),
 		}

@@ -12,8 +12,6 @@ use super::v2::{Hash, Mesh2};
 pub struct CSGMDL4 {
 	pub hash: Hash,
 	pub mesh: Mesh2,
-	#[br(temp)]
-	#[bw(try_calc=_unknown1_list.len().try_into())]
 	pub _unknown1_count: u32,
 	#[br(count=_unknown1_count)]
 	pub _unknown1_list: Vec<u32>,

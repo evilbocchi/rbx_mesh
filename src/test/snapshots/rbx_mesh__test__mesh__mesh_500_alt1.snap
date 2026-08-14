@@ -5,6 +5,12 @@ expression: mesh
 Mesh5 {
     revision: Version500,
     lod_type: Type4,
+    vertex_count: 1741,
+    face_count: 3914,
+    lod_count: 6,
+    bone_count: 7,
+    bone_names_len: 73,
+    subset_count: 1,
     lod_hq_count: 3,
     facs_format: Format1,
     sizeof_facs: 63547,
@@ -124373,6 +124379,11 @@ Mesh5 {
         },
     ],
     facs: Facs5 {
+        face_bone_names_len: 753,
+        face_control_names_len: 280,
+        quantized_transforms_len: 62328,
+        two_pose_correctives_len: 96,
+        three_pose_correctives_len: 66,
         face_bone_names: [
             82,
             95,

@@ -5,6 +5,12 @@ expression: mesh
 Mesh5 {
     revision: Version500,
     lod_type: ZeuxMeshOptimizer,
+    vertex_count: 1424,
+    face_count: 1732,
+    lod_count: 4,
+    bone_count: 33,
+    bone_names_len: 468,
+    subset_count: 3,
     lod_hq_count: 1,
     facs_format: Format1,
     sizeof_facs: 18241,
@@ -83880,6 +83886,11 @@ Mesh5 {
         },
     ],
     facs: Facs5 {
+        face_bone_names_len: 429,
+        face_control_names_len: 280,
+        quantized_transforms_len: 17508,
+        two_pose_correctives_len: 0,
+        three_pose_correctives_len: 0,
         face_bone_names: [
             82,
             105,

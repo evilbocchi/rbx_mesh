@@ -4,6 +4,8 @@ expression: mesh
 ---
 Mesh2 {
     revision: Version200,
+    vertex_count: 42,
+    face_count: 44,
     vertices: Truncated(
         [
             Vertex2Truncated {

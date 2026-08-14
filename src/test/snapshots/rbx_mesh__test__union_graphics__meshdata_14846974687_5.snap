@@ -3,6 +3,7 @@ source: src/test/union_graphics.rs
 expression: mesh
 ---
 CSGMDL5 {
+    pos_count: 103,
     positions: [
         [
             -11.883789,
@@ -520,6 +521,8 @@ CSGMDL5 {
             2.4587402,
         ],
     ],
+    normals_count: 103,
+    normals_len: 618,
     normals: [
         QuantizedF32x3(
             [
@@ -1243,6 +1246,7 @@ CSGMDL5 {
             ],
         ),
     ],
+    color_count: 103,
     colors: [
         [
             124,
@@ -1863,6 +1867,7 @@ CSGMDL5 {
             255,
         ],
     ],
+    normal_id_count: 103,
     normal_ids: [
         NormalId5(
             Bottom,
@@ -2174,6 +2179,7 @@ CSGMDL5 {
             Bottom,
         ),
     ],
+    tex_count: 103,
     tex: [
         [
             -11.884766,
@@ -2588,6 +2594,8 @@ CSGMDL5 {
             -2.4587708,
         ],
     ],
+    tangents_count: 103,
+    tangents_len: 618,
     tangents: [
         QuantizedF32x3(
             [

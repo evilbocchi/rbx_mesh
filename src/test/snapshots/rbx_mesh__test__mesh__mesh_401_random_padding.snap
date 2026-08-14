@@ -5,6 +5,12 @@ expression: mesh
 Mesh4 {
     revision: Version401,
     lod_type: Type4,
+    vertex_count: 3165,
+    face_count: 3960,
+    lod_count: 6,
+    bone_count: 0,
+    bone_names_len: 0,
+    subset_count: 0,
     lod_hq_count: 1,
     _padding: 63,
     vertices: [

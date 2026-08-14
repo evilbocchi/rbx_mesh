@@ -4,6 +4,9 @@ expression: mesh
 ---
 Mesh3 {
     revision: Version300,
+    lod_count: 4,
+    vertex_count: 581,
+    face_count: 390,
     vertices: Full(
         [
             Vertex2 {

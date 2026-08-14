@@ -66,15 +66,11 @@ pub struct VertexId(pub u32);
 #[brw(little)]
 #[derive(Debug, Clone)]
 pub struct Mesh2 {
-	#[br(temp)]
-	#[bw(try_calc=vertices.len().try_into())]
 	pub vertex_count: u32,
 	// vertex data length
 	#[brw(magic = 84u32)]
 	#[br(count=vertex_count)]
 	pub vertices: Vec<Vertex>,
-	#[br(temp)]
-	#[bw(try_calc=(faces.len()*3).try_into())]
 	pub face_count: u32,
 	#[br(count=face_count/3)]
 	pub faces: Vec<[VertexId; 3]>,

@@ -42,6 +42,7 @@ CSGMDL4 {
         ],
     },
     mesh: Mesh2 {
+        vertex_count: 468,
         vertices: [
             Vertex {
                 pos: [
@@ -14084,6 +14085,7 @@ CSGMDL4 {
                 ],
             },
         ],
+        face_count: 1152,
         faces: [
             [
                 VertexId(
@@ -18311,6 +18313,7 @@ CSGMDL4 {
             ],
         ],
     },
+    _unknown1_count: 3,
     _unknown1_list: [
         0,
         1050,

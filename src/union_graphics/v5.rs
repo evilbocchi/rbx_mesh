@@ -215,44 +215,28 @@ impl QuantizedF32x3 {
 #[br(magic = b"\x15\x7d\x29\x15\x75\x6c\x35\x04\x34\x69")]
 #[derive(Debug, Clone)]
 pub struct CSGMDL5 {
-	#[br(temp)]
-	#[bw(try_calc=positions.len().try_into())]
 	pub pos_count: u16,
 	#[br(count=pos_count)]
 	pub positions: Vec<[f32; 3]>,
 
-	#[br(temp)]
-	#[bw(try_calc=normals.len().try_into())]
 	pub normals_count: u16,
-	#[br(temp)]
-	#[bw(try_calc=(normals.len()*size_of::<QuantizedF32x3>()).try_into())]
 	pub normals_len: u32,
 	#[br(count=normals_count)]
 	pub normals: Vec<QuantizedF32x3>,
 
-	#[br(temp)]
-	#[bw(try_calc=colors.len().try_into())]
 	pub color_count: u16,
 	#[br(count=color_count)]
 	pub colors: Vec<[u8; 4]>,
 
-	#[br(temp)]
-	#[bw(try_calc=normal_ids.len().try_into())]
 	pub normal_id_count: u16,
 	#[br(count=normal_id_count)]
 	pub normal_ids: Vec<NormalId5>,
 
-	#[br(temp)]
-	#[bw(try_calc=tex.len().try_into())]
 	pub tex_count: u16,
 	#[br(count=tex_count)]
 	pub tex: Vec<[f32; 2]>,
 
-	#[br(temp)]
-	#[bw(try_calc=tangents.len().try_into())]
 	pub tangents_count: u16,
-	#[br(temp)]
-	#[bw(try_calc=(tangents.len()*size_of::<QuantizedF32x3>()).try_into())]
 	pub tangents_len: u32,
 	#[br(count=tangents_count)]
 	pub tangents: Vec<QuantizedF32x3>,

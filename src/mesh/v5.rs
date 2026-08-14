@@ -39,31 +39,6 @@ pub enum QuantizedMatrix5 {
 		matrix: Vec<u16>,
 	},
 }
-impl QuantizedMatrix5 {
-	/// The serialization length of this struct in bytes.
-	fn len(&self) -> usize {
-		// magic number
-		size_of::<u16>()
-		// enum variant
-		+ match self {
-			QuantizedMatrix5::Raw { x, y, .. } => {
-				// x, y
-				2 * size_of::<u32>()
-				// matrix
-				+ (x * y) as usize * size_of::<f32>()
-			}
-			QuantizedMatrix5::Quantized { x, y, .. } => {
-				// x, y
-				2 * size_of::<u32>()
-				// lerp0, lerp1
-				+ 2 * size_of::<f32>()
-				// matrix
-				+ (x * y) as usize * size_of::<u16>()
-			}
-		}
-	}
-}
-
 #[binrw::binrw]
 #[brw(little)]
 #[derive(Debug, Clone)]
@@ -75,18 +50,6 @@ pub struct QuantizedTransforms5 {
 	pub ry: QuantizedMatrix5,
 	pub rz: QuantizedMatrix5,
 }
-impl QuantizedTransforms5 {
-	/// The serialization length of this struct in bytes.
-	fn len(&self) -> usize {
-		self.px.len()
-			+ self.py.len()
-			+ self.pz.len()
-			+ self.rx.len()
-			+ self.ry.len()
-			+ self.rz.len()
-	}
-}
-
 #[binrw::binrw]
 #[brw(little)]
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
@@ -106,20 +69,10 @@ pub struct ThreePoseCorrective5(pub [ControlId5; 3]);
 #[brw(little)]
 #[derive(Debug, Clone)]
 pub struct Facs5 {
-	#[br(temp)]
-	#[bw(try_calc=face_bone_names.len().try_into())]
 	pub face_bone_names_len: u32,
-	#[br(temp)]
-	#[bw(try_calc=face_control_names.len().try_into())]
 	pub face_control_names_len: u32,
-	#[br(temp)]
-	#[bw(try_calc=quantized_transforms.len().try_into())]
 	pub quantized_transforms_len: u64,
-	#[br(temp)]
-	#[bw(try_calc=(two_pose_correctives.len()*size_of::<TwoPoseCorrective5>()).try_into())]
 	pub two_pose_correctives_len: u32,
-	#[br(temp)]
-	#[bw(try_calc=(three_pose_correctives.len()*size_of::<ThreePoseCorrective5>()).try_into())]
 	pub three_pose_correctives_len: u32,
 	#[br(count=face_bone_names_len)]
 	pub face_bone_names: Vec<u8>,
@@ -144,23 +97,11 @@ pub struct Mesh5 {
 	#[brw(magic = 32u16)]
 	_sizeof_header: (),
 	pub lod_type: LodType4,
-	#[br(temp)]
-	#[bw(try_calc=vertices.len().try_into())]
 	pub vertex_count: u32,
-	#[br(temp)]
-	#[bw(try_calc=faces.len().try_into())]
 	pub face_count: u32,
-	#[br(temp)]
-	#[bw(try_calc=lods.len().try_into())]
 	pub lod_count: u16,
-	#[br(temp)]
-	#[bw(try_calc=bones.len().try_into())]
 	pub bone_count: u16,
-	#[br(temp)]
-	#[bw(try_calc=bone_names.len().try_into())]
 	pub bone_names_len: u32,
-	#[br(temp)]
-	#[bw(try_calc=subsets.len().try_into())]
 	pub subset_count: u16,
 	pub lod_hq_count: u8,
 	#[br(temp)]

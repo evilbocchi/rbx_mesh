@@ -54,12 +54,6 @@ impl Vertices2 {
 			Vertices2::Truncated(_) => SizeOfVertex2::Truncated,
 		}
 	}
-	pub(crate) fn len(&self) -> usize {
-		match self {
-			Vertices2::Full(vertices) => vertices.len(),
-			Vertices2::Truncated(vertices_truncated) => vertices_truncated.len(),
-		}
-	}
 }
 
 #[binrw::binrw]
@@ -88,11 +82,7 @@ pub struct Mesh2 {
 	#[bw(ignore)]
 	#[brw(magic = 12u8)]
 	_sizeof_face: (),
-	#[br(temp)]
-	#[bw(try_calc=vertices.len().try_into())]
 	pub vertex_count: u32,
-	#[br(temp)]
-	#[bw(try_calc=faces.len().try_into())]
 	pub face_count: u32,
 	#[br(args(&sizeof_vertex, vertex_count))]
 	pub vertices: Vertices2,
