@@ -1,0 +1,16 @@
+[package]
+name = "rbx_mesh_node"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rbx_mesh = { path = "../..", default-features = false }
+napi = "3"
+napi-derive = "3"
+
+[build-dependencies]
+napi-build = "2"

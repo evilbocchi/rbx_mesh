@@ -1,10 +1,9 @@
-Roblox Mesh Parser
-==================
+# Roblox Mesh Parser
 
 [![Latest version](https://img.shields.io/crates/v/rbx_mesh.svg)](https://crates.io/crates/rbx_mesh)
 ![License](https://img.shields.io/crates/l/rbx_mesh.svg)
 
-`rbx_mesh` is a collection of deserializers for the different mesh versions in Roblox, and a function to detect the version and invoke the correct deserializer.  The meshes are decoded into a structure that reflects the on-disk format of the particular mesh version, rather than being translated into a catch-all structure.
+`rbx_mesh` is a collection of deserializers for the different mesh versions in Roblox, and a function to detect the version and invoke the correct deserializer. The meshes are decoded into a structure that reflects the on-disk format of the particular mesh version, rather than being translated into a catch-all structure.
 
 ## Mesh Example
 
@@ -38,6 +37,7 @@ match versioned_mesh{
 ```
 
 ## Union Graphics Example
+
 ```rust
 use rbx_mesh::read_union_graphics_versioned;
 use rbx_mesh::union_graphics::UnionGraphics;
@@ -59,6 +59,7 @@ match mesh{
 ```
 
 ## Union Physics Example
+
 ```rust
 use rbx_mesh::read_union_physics_versioned;
 use rbx_mesh::union_physics::UnionPhysics;

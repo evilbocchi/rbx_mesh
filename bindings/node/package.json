@@ -1,0 +1,28 @@
+{
+  "name": "rbx-mesh",
+  "version": "0.1.0",
+  "description": "Node.js bindings for rbx_mesh",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "*.node"
+  ],
+  "scripts": {
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "test": "node --test test/*.test.cjs"
+  },
+  "napi": {
+    "binaryName": "rbx_mesh"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.7.1"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "license": "MIT OR Apache-2.0",
+  "private": true
+}
