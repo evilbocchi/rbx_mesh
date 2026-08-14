@@ -566,7 +566,7 @@ pub struct Facs5Binding {
 	pub face_bone_names_len: u32,
 	pub face_control_names_len: u32,
 	/// Serialized byte length of all six quantized transform matrices.
-	pub quantized_transforms_len: u64,
+	pub quantized_transforms_len: i64,
 	/// Serialized byte length (not element count).
 	pub two_pose_correctives_len: u32,
 	/// Serialized byte length (not element count).
@@ -583,7 +583,7 @@ impl From<&rbx::Facs5> for Facs5Binding {
 		Self {
 			face_bone_names_len: value.face_bone_names.len() as u32,
 			face_control_names_len: value.face_control_names.len() as u32,
-			quantized_transforms_len: quantized_transforms5_len(&value.quantized_transforms) as u64,
+			quantized_transforms_len: quantized_transforms5_len(&value.quantized_transforms) as i64,
 			two_pose_correctives_len: (value.two_pose_correctives.len()
 				* std::mem::size_of::<rbx::TwoPoseCorrective5>()) as u32,
 			three_pose_correctives_len: (value.three_pose_correctives.len()
