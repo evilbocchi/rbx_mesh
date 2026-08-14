@@ -8,7 +8,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-rbx_mesh = { path = "../..", default-features = false }
+rbx_mesh = { path = "../.." }
 napi = "3"
 napi-derive = "3"
 
