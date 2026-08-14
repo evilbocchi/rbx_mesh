@@ -53,25 +53,25 @@ jobs:
   build:
     name: Build ${{ matrix.platform }}
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-    runs-on: ${{ matrix.host }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - host: windows-latest
+          - os: windows-latest
             target: x86_64-pc-windows-msvc
             platform: win32-x64-msvc
-          - host: ubuntu-22.04
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             platform: linux-x64-gnu
-          - host: ubuntu-22.04
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-musl
             platform: linux-x64-musl
             musl: true
-          - host: macos-13
+          - os: macos-13
             target: x86_64-apple-darwin
             platform: darwin-x64
-          - host: macos-14
+          - os: macos-14
             target: aarch64-apple-darwin
             platform: darwin-arm64
     steps:
